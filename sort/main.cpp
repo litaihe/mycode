@@ -2,31 +2,35 @@
 #include <vector>
 #include <ctime>
 #include <cstdlib>
-#include "QuickSort.hpp"
+// #include "QuickSort.hpp"
+// #include "ShellSort.hpp"
 // #include "SelectionSort.hpp"
 //#include "InsertionSort.hpp"
+#include "MergeSort.hpp"
 int main(int argc, char *argv[])
 {
-    const int size=5;
-    std::vector <float> data={24,1,69,11,45};
+    const int size = 10;
+    std::vector<float> data(size, 0);
+    std::vector<float> aux(size,0);
     srand(time(NULL));
-    for(auto it=data.begin();it!=data.end();it++)
+    for (auto it = data.begin(); it != data.end(); it++)
     {
-        // *it=rand()%100;
-        std::cout<<*it<<" ";
+        *it = rand() % 1000;
+        std::cout << *it << " ";
     }
-    std::cout<<std::endl;
-    
-    //SelectionSort1<float>(data.data(),size);
-    // InsertionSort<float>(data.data(),size);
-    QuickSort<float>(data.data(),0,size-1);
+    std::cout << std::endl;
 
-    for(auto it=data.begin();it!=data.end();it++)
+    // SelectionSort1<float>(data.data(),data.size());
+    // InsertionSort<float>(data.data(),data.size());
+    // QuickSort<float>(data.data(),0,data.size()-1);
+    // ShellSort(data.data(),data.size());
+    MergeSort<float>(data.data(), aux.data(), 0, data.size() - 1);
+    for (auto it = data.begin(); it != data.end(); it++)
     {
-        std::cout<<*it<<" ";
+        std::cout << *it << " ";
     }
 
-    std::cout<<std::endl;
+    std::cout << std::endl;
 
     return 0;
 }
