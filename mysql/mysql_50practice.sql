@@ -3,6 +3,7 @@
  * 引自https://blog.csdn.net/flycat296/article/details/63681089
  *********************/
 
+######目前存在疑问题目:9 13 
 -- #创建学生表
 -- create table Student
 -- (Sid varchar(10),
@@ -101,3 +102,94 @@
 -- inner join (select Sid,Sname from Student)B on A.Sid=B.Sid where avgOfScore>60;
 -- #3.查询在表中存在成绩的学生信息
 -- select * from student where Sid in (select distinct Sid from SC);
+-- # 4. 查询所有同学的学生编号、学生姓名、选课总数、所有课程的总成绩(没成绩的显示为 null)
+-- select B.Sid,B.Sname,A.CountOfCourse,A.SumOfScore from (select Sid,count(*) as CountOfCourse,sum(score) as SumOfScore from SC group by Sid)A 
+-- right join student B on A.sid =B.sid order by SumOfScore desc;
+-- # 4.1 查有成绩的学生信息
+-- select B.Sid,B.Sname,A.CountOfCourse,A.SumOfScore from 
+-- (select Sid,count(*) as CountOfCourse,sum(score) as SumOfScore from SC group by Sid having CountOfCourse is not null)A 
+-- left join student B on A.sid =B.sid ; #由于不存在有成绩没人的情况，having语句可以省略
+-- # 5. 查询「李」姓老师的数量 
+-- select * from teacher where Tname like '李%';
+-- # 6. 查询学过「张三」老师授课的同学的信息
+-- # 注：实际中可能存在张三不止一个的情况如何处理,个人认为这种情况题目改为用id号检索更好（id一般是唯一的）
+-- select * from student where Sid in (select distinct Sid from SC where Cid in (select distinct Cid from course where 
+-- Tid=(select Tid from teacher where Tname="张三"))); 
+-- # 7.查询没有学全所有课程的同学的信息
+-- select * from student  where Sid in (select Sid from SC group by Sid having count(*)<3);
+
+-- # 8. 查询至少有一门课与学号为" 01 "的同学所学相同的同学的信息 
+-- select * from student where sid in (select distinct Sid from SC where Cid in (select Cid from SC where Sid='01') and Sid <>'01');
+
+-- # 9. 查询和" 01 "号的同学学习的课程完全相同的其他同学的信息 
+
+-- #(1),该方法为博客中所示方法，目前个人认为该方法不严谨在这个题目情况下加上count(cid)>=3判定一定能得出正确的结果
+-- select * from Student 
+-- where Sid in(select Sid from SC where Cid in (select distinct Cid from SC where Sid='01') and Sid<>'01'
+-- group by Sid having count(cid)>=3);
+
+-- #(2)该结果来自博客下'李哲男'评论
+-- select * from student
+-- where Sid in 
+-- (select Sid from SC 
+-- where Sid not in (select Sid from SC where  Cid not in (select Cid from SC where Sid='01'))
+-- group by SC.Sid
+-- having count(Cid)=(select count(Cid) from SC where Sid='01')) and Sid<>'01';
+
+-- #(3)思路来自，博客https://blog.csdn.net/qq_41080850/article/details/84648897下'xianyu_x'给出的评论，答案应该是对的但是查找次数较多运算效率无法保证
+-- select * from student where sid in (select sid from 
+-- (select SC.Sid,GROUP_CONCAT(SC.cid order by SC.Cid) as 'all_course' from SC 
+-- group by SC.sid)all_s where all_s.all_course=(select GROUP_CONCAT(A_01.cid order by A_01.Cid) as 'all_course' 
+-- from (select distinct Sid,Cid from SC where sid='01')A_01 group by A_01.sid ) and Sid<>'01');
+
+-- # 10.查询没学过"张三"老师讲授的任一门课程的学生姓名
+-- select Sname from student where Sid not in 
+-- (select distinct Sid from SC where cid in
+--  (select distinct Cid from course where Tid=
+--  (select Tid from teacher where Tname=N'张三')));
+
+-- # 11. 查询两门及其以上不及格课程的同学的学号，姓名及其平均成绩
+-- select  student.Sid,student.Sname,avgOfScore from
+--  student right join
+--  (select Sid,avg(score) as avgOfScore from sc where score< 60 group by Sid having count(*)>=2)A on student.sid=A.sid ; 
+ 
+-- # 12. 检索" 01 "课程分数小于 60，按分数降序排列的学生信息
+-- select student.*,Score from 
+-- student  right join (select Sid, Score from SC where Cid='01' and score<60)s on s.sid=student.sid 
+-- order by s.score desc;
+
+-- # 13. 按平均成绩从高到低显示所有学生的所有课程的成绩以及平均成绩(将原答案中O改为NULL，根据生活尝试无成绩与成绩为零应为两种不同的方式)
+-- #该题目应该有更简单的处理方法可以进行考虑
+-- select Sid,max(case Cid when '01' then score else NULL end)'01',
+-- max(case Cid when '02' then score else NULL end)'02',
+-- max(case Cid when '03' then score else NULL end)'03',AVG(score)平均分 from SC
+-- group by Sid order by 平均分 desc;
+
+# 14.查询各科成绩最高分、最低分和平均分：
+	#以如下形式显示：课程 ID，课程 name，最高分，最低分，平均分，及格率，中等率，优良率，优秀率
+    #及格为>=60，中等为：70-80，优良为：80-90，优秀为：>=90
+    #要求输出课程号和选修人数，查询结果按人数降序排列，若人数相同，按课程号升序排列
+
+-- select Cid,max(score)'maxOfScore',min(score)'minOfScore',avg(score)'avgOfScore',
+-- round(sum(case when score>=60 then 1.0 else 0 end)/count(*)*100.0,2) as '及格率',
+-- round(sum(case when score>=70 and score<80 then 1.0 else 0.0 end)/count(*)*100.0,2) as '中等率',
+-- round(sum(case when score>=80 and score<90 then 1.0 else 0.0 end)/count(*)*100.0,2) as '优良率',
+-- round(sum(case when score>=90 then 1.0 else 0.0 end)/count(*) /count(*),2)*100.0 as '优秀率'
+--  from SC group by Cid order by Cid;
+
+-- #  15. 按各科成绩进行排序，并显示排名， Score 重复时保留名次空缺,窗口函数
+-- select *,RANK()over(partition by Cid order by score desc)'排名' from SC ;
+-- # 15.1 按各科成绩进行排序，并显示排名， Score 重复时合并名次
+-- select *,dense_rank()over(partition by Cid order by score desc)'排名' from SC ;
+-- #(1)按各科成绩进行排序，并显示排名，赋予唯一的连续位次
+-- select *,row_number()over(partition by Cid order by score desc)'排名' from SC ;
+
+-- # 16.  查询学生的总成绩，并进行排名，总分重复时保留名次空缺
+-- select B.Sid,B.Sname,A.总分,A.排名  from student as B right join
+-- (select  Sid,sum(score)总分,rank()over(order by sum(score)desc )排名 from SC group by Sid)A  on B.Sid=A.Sid; 
+
+-- #16.1 查询学生的总成绩，并进行排名，总分重复时不保留名次空缺
+-- select B.Sid,B.Sname,A.总分,A.排名  from student as B right join
+-- (select  Sid,sum(score)总分,dense_rank()over(order by sum(score)desc )排名 from SC group by Sid)A  on B.Sid=A.Sid; 
+
+-- # 17. 统计各科成绩各分数段人数：课程编号，课程名称，[100-85]，[85-70]，[70-60]，[60-0] 及所占百分比
