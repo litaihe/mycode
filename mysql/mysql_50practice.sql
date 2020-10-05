@@ -192,4 +192,18 @@
 -- select B.Sid,B.Sname,A.总分,A.排名  from student as B right join
 -- (select  Sid,sum(score)总分,dense_rank()over(order by sum(score)desc )排名 from SC group by Sid)A  on B.Sid=A.Sid; 
 
--- # 17. 统计各科成绩各分数段人数：课程编号，课程名称，[100-85]，[85-70]，[70-60]，[60-0] 及所占百分比
+# 17. 统计各科成绩各分数段人数：课程编号，课程名称，[100-85]，[85-70]，[70-60]，[60-0] 及所占百分比
+# (1)
+-- select  course.cname, A.* from course right join(select cid,
+-- sum(case when score<=100 and score>=85 then 1 else 0 end)"[100-85]",
+-- round(sum(case when score<=100 and score>=85 then 1 else 0 end)/count(*)*100,2) as "per:[100-85]",
+-- sum(case when score<85 and score>=70 then 1 else 0 end)"[80-75]",
+-- round(sum(case when score<85 and score>=70 then 1 else 0 end)/count(*)*100,2) as "per:[80-75]",
+-- sum(case when score<70 and score>=60 then 1 else 0 end)"[70-60]",
+-- round(sum(case when score<70 and score>=60 then 1 else 0 end)/count(*)*100,2) as "per:[70-60]",
+-- sum(case when score<60 and score>=0  then 1 else 0 end)"[60-0]",
+-- round(sum(case when score<60 and score>=0  then 1 else 0 end)/count(*)*100,2) as "per:[60-0]"
+--  from SC group by cid order by Cid)A on course.cid=A.cid;
+
+#(2)
+
