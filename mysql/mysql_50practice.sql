@@ -3,7 +3,7 @@
  * 引自https://blog.csdn.net/flycat296/article/details/63681089
  *********************/
 
-######目前存在疑问题目:9 13 
+######目前存在疑问题目:9 13 18 23
 -- #创建学生表
 -- create table Student
 -- (Sid varchar(10),
@@ -29,6 +29,7 @@
 -- insert into Course values('02' , N'数学' , '01');
 -- insert into Course values('03' , N'英语' , '03');
 -- select * from Course;
+
 
 -- #创建老师表
 -- create table Teacher(Tid varchar(10),Tname nvarchar(10));
@@ -194,7 +195,7 @@
 
 # 17. 统计各科成绩各分数段人数：课程编号，课程名称，[100-85]，[85-70]，[70-60]，[60-0] 及所占百分比
 # (1)
--- select  course.cname, A.* from course right join(select cid,
+-- select  distinct course.cname, A.* from course right join(select cid,
 -- sum(case when score<=100 and score>=85 then 1 else 0 end)"[100-85]",
 -- round(sum(case when score<=100 and score>=85 then 1 else 0 end)/count(*)*100,2) as "per:[100-85]",
 -- sum(case when score<85 and score>=70 then 1 else 0 end)"[80-75]",
@@ -203,7 +204,136 @@
 -- round(sum(case when score<70 and score>=60 then 1 else 0 end)/count(*)*100,2) as "per:[70-60]",
 -- sum(case when score<60 and score>=0  then 1 else 0 end)"[60-0]",
 -- round(sum(case when score<60 and score>=0  then 1 else 0 end)/count(*)*100,2) as "per:[60-0]"
---  from SC group by cid order by Cid)A on course.cid=A.cid;
-
+--  from SC group by cid )A on course.cid=A.cid order by A.cid ;
 #(2)
 
+-- # 18. 查询各科成绩前三名的记录
+-- #(1)
+-- select S.sid,S.Sname,B.score,B.RankOfScore from student S right join 
+-- (select * from  (select *,rank()over(partition by Cid order by score desc) as RankOfScore from SC)A where A.RankOfScore<=3)B 
+-- On B.sid=S.sid ;
+-- #(2)
+-- select a.Sid,a.Cid,a.score from SC a 
+-- left join SC b on a.Cid=b.Cid and a.score<b.score
+-- group by a.Sid,a.Cid,a.score
+-- having COUNT(b.Sid)<3
+-- order by a.Cid,a.score desc
+
+-- # 19. 查询每门课程被选修的学生数
+-- select C.*,CountOfCourse from course C right  join 
+-- (select Cid,count(*) as CountOfCourse from SC group by Cid)S on C.Cid=S.Cid order by Cid; 
+
+-- # 20. 查询出只选修两门课程的学生学号和姓名
+-- select Sid,Sname from student where Sid in (select Sid from SC group by Sid having count(Cid)=2);
+
+-- # 21. 查询男生、女生人数
+-- select Ssex 性别,count(Sid) 人数  from student group by Ssex ;
+
+-- # 22. 查询名字中含有「风」字的学生信息
+-- select * from student where Sname like "%风%";
+
+-- # 23. 查询同名同性学生名单，并统计同名人数(不知如何处理)
+-- select Sname,Ssex,count(*) from student group by Sname,Ssex having count(*)>=2;
+
+-- #24. 查询 1990 年出生的学生名单
+-- select * from student where year(Sage)=1990;
+
+-- # 25. 查询每门课程的平均成绩，结果按平均成绩降序排列，平均成绩相同时，按课程编号升序排列
+-- select Cid,avg(score) from SC group by Cid order by avg(score) desc,Cid;
+
+-- # 26. 查询平均成绩大于等于 85 的所有学生的学号、姓名和平均成绩
+-- select B.Sid,B.sname,avgOfScore from student B right join
+-- (select  Sid,avg(score) as avgOfScore  from SC group by Sid having avg(score)>=85)A on A.sid=B.sid;
+
+-- # 27. 查询课程名称为「数学」，且分数低于 60 的学生姓名和分数
+
+--  select B.Sname,A.score from student B 
+--  right join(select Sid,Score from SC where 
+--  Cid in (select Cid from course where Cname=N'数学') and score<60)A 
+--  on A.sid=B.sid;
+ 
+ -- # 28. 查询所有学生的课程及分数情况（存在学生没成绩，没选课的情况）
+ -- select A.Sid,A.sname,B.Cid,B.score from Student A left join SC B on A.Sid=B.Sid;
+ 
+ -- # 29. 查询任何一门课程成绩在 70 分以上的姓名、课程名称和分数
+--  select B.Sname,C.Cname,A.score from (select Sid,Cid,Score from SC where score>70)A 
+--  left join student B on A.Sid =B.sid 
+--  left join course C on A.Cid=C.cid order by B.sname;
+
+-- # 30. 查询不及格的课程
+-- select * from SC where score<60;
+
+
+-- # 31. 查询课程编号为 01 且课程成绩在 80 分以上的学生的学号和姓名
+-- # (1)
+-- select A.sid,A.Sname from Student A where Sid in (select Sid from SC where Cid='01' and score<80);
+-- # (2)
+-- select A.Sid,B.Sname from (select * from SC where score<80 and Cid=01)A
+-- left join Student B on A.Sid=B.Sid;
+
+-- # 32. 求每门课程的学生人数
+-- select B.Cname as 课程名称 ,A.学生人数  from (select Cid,count(*) as 学生人数 from SC group by Cid)A left join course B on A.cid=B.cid;
+
+
+-- # 33. 成绩不重复，查询选修「张三」老师所授课程的学生中，成绩最高的学生信息及其成绩
+-- #(1)
+-- select S.Sid,S.Sname,A.MaxOfScore from student S right join(select Sid,Max(score) as MaxOfSCore from SC where Sid in
+-- (select Sid from SC where Cid in 
+-- (select Cid from course where Tid in(select Tid from teacher where Tname="张三"))))A on A.Sid=S.Sid ;
+-- #(2)
+-- select * from SC 
+-- where Cid=(select Cid from Course where Tid=(select Tid from Teacher where Tname='张三')) 
+-- order by score desc limit 1;
+
+-- #34. 成绩有重复的情况下，查询选修「张三」老师所授课程的学生中，成绩最高的学生信息及其成绩
+-- select * from (select *,dense_rank()over(order by Score desc)A from SC 
+-- where Cid=(select Cid from Course where Tid=(select Tid from Teacher where Tname='张三')))B  where B.A=1;
+
+-- #35. 查询不同课程成绩相同的学生的学生编号、课程编号、学生成绩 
+-- select A.sid,A.Cid,score from  (select Sid ,group_concat(Cid)Cid ,score from SC group by Sid having min(score)=max(score))A;
+-- #36. 查询每门功成绩最好的前两名
+-- select * from (select *,row_number()over(partition by Cid order by Score desc )A from SC)B where B.A<3;
+
+-- # 37. 统计每门课程的学生选修人数(超过 5 人的课程才统计)
+-- #要求输出课程号和选修人数，查询结果按人数降序排列，若人数相同，按课程号升序排列
+-- select Cid,Count(*)StudentNumber from SC group by Cid having count(*)>5 order by StudentNumber desc,Cid;
+
+-- # 38. 检索至少选修两门课程的学生学号
+-- select Sid from SC group by Sid having count(*)>=2;
+ 
+-- # 39. 查询选修了全部课程的学生信息
+-- select * from student where Sid in 
+-- (select Sid from SC group by Sid having count(*)=(select distinct count(*) from course));
+
+
+-- # 40. 查询各学生的年龄,只按年份来算
+
+-- select Sid,year(now())-year(sage) as 年龄 from Student;
+
+-- 41. 按照出生日期来算，当前月日 < 出生年月的月日则，年龄减一
+-- select *,(year(now())-year(sage))age_old,
+-- (case when month(now())<month(Sage) then year(now())-year(sage)-1 else year(now())-year(sage) end)age from student; 
+
+-- # 42. 查询本周过生日的学生
+delimiter //
+start transaction;
+
+    set @nowdate=curdate();
+    -- select @nowdate;
+    set @DayOfWeek=DayOfWeek(@nowdate);
+    -- select @DayOfWeek;
+    set @weekBg=date_add(@nowdate,interval -@DayOfWeek+1 day);
+    -- select @weekBg ;
+    set @weekEd=date_add(@nowdate,interval  @DayOfWeek-1 day);
+    select @weekEd;
+
+commit // 
+delimiter ;
+
+-- # 43. 查询下周过生日的学生
+
+-- # 44. 查询本月过生日的学生
+-- select * from student where month(now())=month(Sage); 
+
+-- #45. 查询下月过生日的学生
+-- select * from student where month(date_add(now(),interval 1 month))=month(Sage);
